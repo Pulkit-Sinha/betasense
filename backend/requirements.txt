@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+langchain-aws==0.1.7
+langchain-core==0.2.7
+pydantic
+aiohttp
+python-dotenv
+pypdf2
+chromadb
+sentence-transformers
+pysolr

@@ -1,0 +1,72 @@
+# Environment variables and sensitive credentials
+backend/.env
+frontend/.env
+.env*
+
+# AWS and LLM credentials
+*.pem
+*.key
+aws-credentials*
+bedrock-config*
+
+# Python virtual environments
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node modules and build files
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+
+# Database and search indices
+backend/chroma_db/
+backend/.last_index_time
+backend/*.db
+backend/*.sqlite
+
+# Logs
+backend/*.log
+frontend/*.log
+*.log
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sensitive document directories
+data/broker_research/
+
+# But allow the directory structure
+!data/broker_research/.gitkeep
+
+# Temporary files
+*.tmp
+*.temp
+backend/temp/
+frontend/temp/
+
+# Docker volumes and data
+docker-compose.override.yml
+.docker/
+
+# Backup files
+*.bak
+*.backup
+*.old
