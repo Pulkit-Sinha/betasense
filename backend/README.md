@@ -114,12 +114,16 @@ data/
 
 ## Configuration
 
-### Environment Variables (.env)
+### Required AWS Credentials
+
+**IMPORTANT**: You must have valid AWS credentials with Bedrock access to use Claude 4 Sonnet.
+
+Create a `.env` file in the `backend/` directory:
 ```bash
-ENABLE_LLM_SERVICE=true
+# AWS Bedrock credentials (REQUIRED for LLM functionality)
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_SESSION_TOKEN=your_aws_session_token
+AWS_SESSION_TOKEN=your_aws_session_token  # If using temporary credentials
 ```
 
 ### Document Change Detection
