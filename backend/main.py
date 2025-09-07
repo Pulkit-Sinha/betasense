@@ -83,15 +83,48 @@ async def query_documents(request: QueryRequest):
             "web_results": []
         }
         
-        # If web search is enabled, perform web search first
+        # Always search local documents first - get top 10 from each engine
+        filters = map_source_selection_to_filters(request.sources)
+        print(f"Source filters: categories={filters['categories']}, subcategories={filters['subcategories']}")
+        
+        local_results = hybrid_search_service.search_documents_expanded(
+            query=request.question,
+            categories=filters['categories'] if filters['categories'] else None,
+            subcategories=filters['subcategories'] if filters['subcategories'] else None,
+            keyword_count=10,
+            vector_count=10
+        )
+        
+        # Prepare local context from all deduplicated results
+        local_context = ""
+        if local_results:
+            # Use all chunks after deduplication (no artificial limit)
+            local_context = "\n\n".join([
+                f"Source: {result['source_file']} (Score: {result['combined_score']:.3f}, Type: {result['search_type']})\n{result['text']}"
+                for result in local_results
+            ])
+            
+            # Include all sources in response metadata
+            response_data["sources_used"] = [
+                {
+                    "file": result['source_file'], 
+                    "score": result['combined_score'],
+                    "search_type": result['search_type'],
+                    "chunk_id": result['chunk_id']
+                }
+                for result in local_results
+            ]
+        
+        # If web search is enabled, also perform web search
         if request.enable_web_search:
-            web_results = await websearch_service.search_web(request.question)
+            web_results = await websearch_service.search_and_scrape_web(request.question)
             response_data["web_results"] = web_results
             
-            if web_results:
-                # Enhance query with web context
-                enhanced_answer = await websearch_service.enhance_query_with_web_context(
+            # Combine local and web context
+            if web_results or local_results:
+                enhanced_answer = await websearch_service.enhance_query_with_combined_context(
                     request.question, 
+                    local_context,
                     web_results
                 )
                 response_data["answer"] = enhanced_answer
@@ -101,39 +134,19 @@ async def query_documents(request: QueryRequest):
                 basic_answer = llm_service.execute_prompt(system_prompt, request.question)
                 response_data["answer"] = basic_answer or "I couldn't generate a response to your question."
         else:
-            # Use local document search with source filtering
-            filters = map_source_selection_to_filters(request.sources)
-            print(f"Source filters: categories={filters['categories']}, subcategories={filters['subcategories']}")
-            
-            local_results = hybrid_search_service.search_documents(
-                query=request.question,
-                categories=filters['categories'] if filters['categories'] else None,
-                subcategories=filters['subcategories'] if filters['subcategories'] else None,
-                max_results=5
-            )
-            
+            # Use only local document search
             if local_results:
-                # Prepare context from search results
-                context = "\n\n".join([
-                    f"Source: {result['source_file']}\n{result['text']}"
-                    for result in local_results[:3]
-                ])
-                
                 system_prompt = """You are a financial AI assistant analyzing documents. Answer the user's question based on the provided document excerpts. Always cite your sources."""
                 
                 user_prompt = f"""Question: {request.question}
 
 Relevant document excerpts:
-{context}
+{local_context}
 
 Please provide a comprehensive answer based on these documents."""
                 
                 local_answer = llm_service.execute_prompt(system_prompt, user_prompt)
                 response_data["answer"] = local_answer or "I couldn't generate a response based on the documents."
-                response_data["sources_used"] = [
-                    {"file": result['source_file'], "score": result['combined_score']}
-                    for result in local_results[:3]
-                ]
             else:
                 response_data["answer"] = "I couldn't find relevant information in the local documents."
         

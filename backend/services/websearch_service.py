@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 from .llm_service import LLMService
 import sys
 import os
+from playwright.async_api import async_playwright
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import LLMModel
 
@@ -42,33 +43,212 @@ class WebSearchService:
             print(f"Web search error: {e}")
             return []
 
-    async def enhance_query_with_web_context(self, original_query: str, web_results: List[Dict[str, Any]]) -> str:
+    def extract_relevant_sections(self, content: str, query: str) -> str:
         """
-        Use Claude to enhance the original query with web search context
+        Extract sections of content most relevant to the query using keyword scoring
         """
-        if not web_results:
-            return original_query
+        if not content or not query:
+            return content[:2000] if content else ""
+            
+        # Prepare query keywords
+        query_words = set(query.lower().split())
+        # Add financial keywords to boost relevance
+        financial_keywords = {'stock', 'financial', 'earnings', 'revenue', 'profit', 'market', 'analyst', 'forecast'}
+        query_words.update(financial_keywords)
+        
+        # Split content into paragraphs
+        paragraphs = [p.strip() for p in content.split('\n\n') if len(p.strip()) > 50]
+        
+        # Score paragraphs based on keyword matches
+        scored_paragraphs = []
+        for para in paragraphs:
+            para_lower = para.lower()
+            # Count keyword matches
+            keyword_score = sum(1 for word in query_words if word in para_lower)
+            # Boost score for longer, substantive paragraphs
+            length_score = min(len(para) / 500, 2)  # Cap at 2x boost
+            # Boost for financial terms
+            financial_score = sum(0.5 for word in financial_keywords if word in para_lower)
+            
+            total_score = keyword_score + length_score + financial_score
+            
+            if total_score > 0:
+                scored_paragraphs.append((total_score, para))
+        
+        if not scored_paragraphs:
+            # Fallback to first 2000 chars if no relevant content found
+            return content[:2000]
+        
+        # Sort by relevance and take top paragraphs
+        scored_paragraphs.sort(reverse=True)
+        relevant_content = '\n\n'.join([para for _, para in scored_paragraphs[:3]])
+        
+        # Ensure we don't exceed token limits
+        return relevant_content[:2000]
+
+    async def extract_smart_content(self, page, query: str) -> str:
+        """
+        Extract relevant content from page, removing noise elements
+        """
+        try:
+            # Remove common noise elements
+            await page.evaluate("""
+                // Remove navigation, ads, and other noise
+                const noiseSelectors = [
+                    'nav', 'header', 'footer', '.nav', '.navigation',
+                    '.ad', '.ads', '.advertisement', '.sidebar', '.menu',
+                    '.cookie', '.popup', '.modal', '.overlay',
+                    'script', 'style', '.social', '.share'
+                ];
+                
+                noiseSelectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => el.remove());
+                });
+            """)
+            
+            # Try to find main content areas first
+            content_selectors = [
+                'article', '.article', '#article',
+                '.content', '#content', '.main-content',
+                '.post', '.entry', '.story',
+                'main', '#main', '.main'
+            ]
+            
+            content_text = ""
+            
+            # Try each selector to find main content
+            for selector in content_selectors:
+                try:
+                    element = await page.query_selector(selector)
+                    if element:
+                        content_text = await element.inner_text()
+                        if len(content_text) > 200:  # Found substantial content
+                            break
+                except:
+                    continue
+            
+            # Fallback to paragraphs if no main content found
+            if not content_text or len(content_text) < 200:
+                paragraphs = await page.query_selector_all('p')
+                paragraph_texts = []
+                
+                for p in paragraphs[:15]:  # Limit to first 15 paragraphs
+                    try:
+                        text = await p.inner_text()
+                        if len(text.strip()) > 30:  # Skip very short paragraphs
+                            paragraph_texts.append(text.strip())
+                    except:
+                        continue
+                
+                content_text = '\n\n'.join(paragraph_texts)
+            
+            return content_text
+            
+        except Exception as e:
+            print(f"Error extracting smart content: {e}")
+            # Fallback to basic body text
+            try:
+                return await page.inner_text("body")
+            except:
+                return ""
+
+    async def fetch_clean_html_with_playwright(self, url: str, query: str = "") -> str:
+        """
+        Fetch clean HTML content using playwright with smart extraction
+        """
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                
+                # Set user agent to avoid blocking
+                await page.set_extra_http_headers({
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                })
+                
+                await page.goto(url, timeout=20000)
+                await page.wait_for_timeout(3000)  # Wait for JS to load
+                
+                # Extract smart content
+                raw_content = await self.extract_smart_content(page, query)
+                
+                await browser.close()
+                
+                # Apply keyword-based relevance extraction
+                relevant_content = self.extract_relevant_sections(raw_content, query)
+                
+                return relevant_content
+                
+        except Exception as e:
+            print(f"Error fetching content from {url}: {e}")
+            return ""
+
+    async def search_and_scrape_web(self, query: str, max_results: int = 5) -> List[Dict[str, Any]]:
+        """
+        Enhanced web search that fetches actual content from top results with smart extraction
+        """
+        # First get search results
+        search_results = await self.search_web(query, max_results)
+        
+        if not search_results:
+            return []
+        
+        # Scrape content from top results
+        enhanced_results = []
+        for result in search_results[:max_results]:
+            url = result.get('url', '')
+            if not url:
+                continue
+                
+            print(f"Scraping content from: {url}")
+            # Pass query to extraction for relevance scoring
+            content = await self.fetch_clean_html_with_playwright(url, query)
+            
+            enhanced_results.append({
+                'title': result.get('title', ''),
+                'url': url,
+                'snippet': result.get('snippet', ''),
+                'content': content if content else result.get('snippet', ''),
+                'source': 'web'
+            })
+        
+        return enhanced_results
+
+    async def enhance_query_with_combined_context(self, original_query: str, local_context: str, web_results: List[Dict[str, Any]]) -> str:
+        """
+        Use Claude to enhance the original query with both local document and web search context
+        """
+        if not web_results and not local_context:
+            system_prompt = "You are a financial AI assistant. Answer the user's question accurately and professionally."
+            return self.llm_service.execute_prompt(system_prompt, original_query)
 
         # Prepare web context
-        web_context = "\n".join([
-            f"- {result['title']}: {result['snippet']}"
-            for result in web_results
-        ])
+        web_context = ""
+        if web_results:
+            web_context = "\n\n".join([
+                f"Web Source: {result['title']} ({result['url']})\n{result['content']}"
+                for result in web_results
+            ])
 
-        system_prompt = """You are an AI assistant helping to answer financial questions. You have access to both local financial documents and web search results. Your task is to provide a comprehensive answer that combines information from both sources when relevant.
+        system_prompt = """You are a financial AI assistant with access to both local financial documents and current web information. Provide comprehensive answers that combine information from both sources when relevant.
 
-Always prioritize accuracy and cite your sources appropriately."""
+Always prioritize accuracy and cite your sources appropriately. When information conflicts, note the discrepancy and explain the difference."""
 
-        user_prompt = f"""Original question: {original_query}
+        context_parts = []
+        if local_context:
+            context_parts.append(f"Local Financial Documents:\n{local_context}")
+        if web_context:
+            context_parts.append(f"Current Web Information:\n{web_context}")
 
-Web search results:
-{web_context}
+        user_prompt = f"""Question: {original_query}
 
-Please provide a comprehensive answer that incorporates relevant information from both the web search results and any local financial documents that may be available. If the web results provide important context or recent updates, include them in your response."""
+{chr(10).join(context_parts)}
+
+Please provide a comprehensive answer that incorporates relevant information from the available sources. If you find complementary information between local documents and web sources, highlight how they work together. If there are any conflicts or updates in the web information compared to the documents, please note them."""
 
         try:
             enhanced_response = self.llm_service.execute_prompt(system_prompt, user_prompt)
-            return enhanced_response or original_query
+            return enhanced_response or "I couldn't generate a comprehensive response based on the available information."
         except Exception as e:
-            print(f"Error enhancing query with web context: {e}")
-            return original_query
+            print(f"Error enhancing query with combined context: {e}")
+            return "Error processing the combined information sources."

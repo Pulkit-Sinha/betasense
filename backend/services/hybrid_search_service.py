@@ -68,6 +68,114 @@ class HybridSearchService:
         
         # Return top results
         return combined_results[:max_results]
+
+    def search_documents_expanded(self, 
+                                query: str,
+                                categories: Optional[List[str]] = None,
+                                subcategories: Optional[List[str]] = None,
+                                keyword_count: int = 10,
+                                vector_count: int = 10) -> List[Dict[str, Any]]:
+        """
+        Enhanced search that gets top chunks from each engine separately,
+        then combines them with deduplication
+        """
+        
+        # Get top 10 keyword results
+        keyword_results = []
+        if self.solr_service:
+            print(f"🔍 Performing Solr search for top {keyword_count} keyword matches: '{query}'")
+            keyword_results = self.solr_service.search_documents(
+                query=query,
+                categories=categories,
+                subcategories=subcategories,
+                max_results=keyword_count
+            )
+            print(f"📊 Solr returned {len(keyword_results)} keyword results")
+        else:
+            print("⚠️ Solr service not available, skipping keyword search")
+        
+        # Get top 10 vector results
+        print(f"🧠 Performing ChromaDB search for top {vector_count} semantic matches: '{query}'")
+        vector_results = self.vector_service.search_similar(
+            query=query,
+            categories=categories,
+            subcategories=subcategories,
+            max_results=vector_count
+        )
+        print(f"📊 ChromaDB returned {len(vector_results)} vector results")
+        
+        # Combine with deduplication
+        combined_results = self._combine_and_deduplicate(keyword_results, vector_results)
+        
+        print(f"✅ Combined results after deduplication: {len(combined_results)} chunks")
+        print(f"📈 Range: {len(set([r['chunk_id'] for r in keyword_results + vector_results]))} unique chunks from {keyword_count + vector_count} total")
+        
+        return combined_results
+
+    def _combine_and_deduplicate(self, keyword_results: List[Dict[str, Any]], vector_results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Combine keyword and vector results with smart deduplication and scoring
+        """
+        # Use chunk_id as the key for deduplication
+        combined_dict = {}
+        
+        # Process keyword results first (preserve original scoring)
+        for result in keyword_results:
+            chunk_id = result['chunk_id']
+            combined_dict[chunk_id] = {
+                'chunk_id': chunk_id,
+                'text': result['text'],
+                'source_file': result['source_file'],
+                'category': result['category'],
+                'subcategory': result['subcategory'],
+                'keyword_score': result.get('score', 0),
+                'vector_score': 0,  # Will be updated if found in vector results
+                'search_type': 'keyword_only',
+                'highlighted_text': result.get('highlighted_text', '')
+            }
+        
+        # Process vector results (update existing or add new)
+        for result in vector_results:
+            chunk_id = result['chunk_id']
+            
+            if chunk_id in combined_dict:
+                # Update existing result with vector score
+                combined_dict[chunk_id]['vector_score'] = result.get('similarity_score', 0)
+                combined_dict[chunk_id]['search_type'] = 'hybrid'  # Found in both
+            else:
+                # Add new vector-only result
+                combined_dict[chunk_id] = {
+                    'chunk_id': chunk_id,
+                    'text': result['text'],
+                    'source_file': result['source_file'],
+                    'category': result['category'],
+                    'subcategory': result['subcategory'],
+                    'keyword_score': 0,
+                    'vector_score': result.get('similarity_score', 0),
+                    'search_type': 'vector_only',
+                    'highlighted_text': ''
+                }
+        
+        # Calculate combined scores and sort
+        combined_results = list(combined_dict.values())
+        
+        # Normalize scores for fair comparison
+        max_keyword = max([r['keyword_score'] for r in combined_results]) if combined_results else 1
+        max_vector = max([r['vector_score'] for r in combined_results]) if combined_results else 1
+        
+        for result in combined_results:
+            norm_keyword = (result['keyword_score'] / max_keyword) if max_keyword > 0 else 0
+            norm_vector = (result['vector_score'] / max_vector) if max_vector > 0 else 0
+            
+            # Boost score for chunks found in both engines
+            hybrid_bonus = 0.2 if result['search_type'] == 'hybrid' else 0
+            
+            result['combined_score'] = (norm_keyword * 0.6) + (norm_vector * 0.4) + hybrid_bonus
+        
+        # Sort by combined score (highest first)
+        combined_results.sort(key=lambda x: x['combined_score'], reverse=True)
+        
+        return combined_results
     
     def _combine_results(self, 
                         keyword_results: List[Dict[str, Any]], 
