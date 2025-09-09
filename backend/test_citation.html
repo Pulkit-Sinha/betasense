@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Citation Link Test</title>
+</head>
+<body>
+    <h1>Citation Link Test</h1>
+    
+    <p>Test citation: [Source: 20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf]</p>
+    
+    <script>
+        // Simulate the frontend citation parsing
+        const citationText = "[Source: 20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf]";
+        const match = citationText.match(/\[Source:\s*([^\]]+)\]/);
+        
+        if (match) {
+            const filename = match[1].trim();
+            const urlPath = encodeURIComponent(filename);
+            const pdfUrl = `http://localhost:8000/api/pdf/${urlPath}`;
+            
+            console.log('Original citation:', citationText);
+            console.log('Extracted filename:', filename);
+            console.log('URL encoded:', urlPath);
+            console.log('Final URL:', pdfUrl);
+            
+            // Test the URL
+            fetch(pdfUrl)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response OK:', response.ok);
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.log('Error response:', text);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.log('Fetch error:', error);
+                });
+        }
+    </script>
+</body>
+</html>

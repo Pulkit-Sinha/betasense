@@ -22,14 +22,14 @@ const QueryInterface = ({ query, onQueryChange, onSubmit, loading, onClear, past
   return (
     <div className="query-interface">
       <div className="query-section">
-        <h2>Ask Your Question</h2>
+        <h2>Generate Comprehensive Report</h2>
         <form onSubmit={handleSubmit} className="query-form">
           <div className="textarea-container">
             <textarea
               value={query}
               onChange={(e) => onQueryChange(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter your question about the financial documents... (Ctrl+Enter to submit)"
+              placeholder="Enter your research topic for comprehensive report generation... (Ctrl+Enter to submit)"
               className="query-textarea"
               rows={4}
               disabled={loading}
@@ -61,10 +61,10 @@ const QueryInterface = ({ query, onQueryChange, onSubmit, loading, onClear, past
               {loading ? (
                 <>
                   <span className="loading-spinner"></span>
-                  Analyzing Documents...
+                  Generating Report...
                 </>
               ) : (
-                'Get Answer'
+                'Generate Report'
               )}
             </button>
             

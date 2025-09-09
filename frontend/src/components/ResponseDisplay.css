@@ -328,6 +328,288 @@
   margin: 20px;
 }
 
+/* Report Specific Styles */
+.report-title-section {
+  margin-bottom: 30px;
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+}
+
+.report-title-section h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.report-stats {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-left: 15px;
+}
+
+.report-section {
+  margin-bottom: 40px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.section-header {
+  background: #f8f9fa;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.section-header h2 {
+  margin: 0;
+  color: #333;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.section-meta {
+  color: #6c757d;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.section-content {
+  padding: 25px;
+}
+
+.section-text {
+  color: #495057;
+  line-height: 1.7;
+}
+
+.section-text p {
+  margin-bottom: 15px;
+}
+
+.section-text h1, .section-text h2, .section-text h3 {
+  color: #333;
+  margin-top: 25px;
+  margin-bottom: 15px;
+}
+
+.section-placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.section-placeholder p {
+  margin-bottom: 15px;
+}
+
+.key-topics {
+  margin-top: 15px;
+}
+
+.key-topics ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.key-topics li {
+  margin: 5px 0;
+  color: #495057;
+}
+
+.sources-more {
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+  margin: 15px 0 0 0;
+}
+
+.web-sources-section {
+  margin-bottom: 30px;
+}
+
+.web-sources-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
+
+.source-link:hover {
+  color: #764ba2;
+}
+
+.source-score {
+  font-size: 0.85rem;
+  color: #28a745;
+  font-weight: 500;
+}
+
+/* Markdown Styling */
+.markdown-h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #333;
+  margin: 25px 0 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #667eea;
+}
+
+.markdown-h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #333;
+  margin: 20px 0 12px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.markdown-h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #495057;
+  margin: 18px 0 10px 0;
+}
+
+.markdown-h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin: 15px 0 8px 0;
+}
+
+.markdown-p {
+  color: #495057;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+
+.markdown-ul, .markdown-ol {
+  color: #495057;
+  margin: 15px 0;
+  padding-left: 25px;
+}
+
+.markdown-li {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.markdown-strong {
+  font-weight: 600;
+  color: #333;
+}
+
+.markdown-em {
+  font-style: italic;
+  color: #6c757d;
+}
+
+.markdown-blockquote {
+  margin: 20px 0;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.markdown-code {
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #e83e8c;
+}
+
+/* Citation links styling */
+.citation-link {
+  display: inline-block;
+  margin: 8px 0 12px 0;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border: 1px solid #28a745;
+  border-radius: 4px;
+  color: #28a745;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.citation-link:hover {
+  background: #28a745;
+  color: white;
+  border-color: #218838;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.citation-link:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(40, 167, 69, 0.3);
+}
+
+/* Hover effects for citation links */
+.citation-link:hover::after {
+  content: " ➜";
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+/* Make citation links more prominent */
+.citation-link {
+  vertical-align: middle;
+  margin: 4px 8px 4px 0;
+}
+
+/* Improve readability for financial data */
+.section-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 15px 0;
+}
+
+.section-text table th,
+.section-text table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-text table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Better spacing between subsections */
+.markdown-h2 + .markdown-h3 {
+  margin-top: 15px;
+}
+
+.markdown-h3 + .markdown-p {
+  margin-top: 10px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .response-header,

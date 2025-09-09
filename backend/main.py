@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Dict, Any, List
 import asyncio
@@ -9,6 +10,7 @@ from services.websearch_service import WebSearchService
 from services.llm_service import LLMService
 from services.hybrid_search_service import HybridSearchService
 from services.indexing_service import IndexingService
+from services.comprehensive_report_service import ComprehensiveReportService
 from constants import LLMModel
 
 # Load environment variables
@@ -37,11 +39,18 @@ websearch_service = WebSearchService()
 llm_service = LLMService()
 hybrid_search_service = HybridSearchService()
 indexing_service = IndexingService()
+comprehensive_report_service = ComprehensiveReportService()
 
 class QueryRequest(BaseModel):
     question: str
     sources: Dict[str, Any]
     enable_web_search: bool = False
+
+class ReportRequest(BaseModel):
+    topic: str
+    sources: Dict[str, Any]
+    enable_web_search: bool = False
+    domain_context: str = "financial analysis"
 
 def map_source_selection_to_filters(sources: Dict[str, Any]) -> Dict[str, List[str]]:
     """Convert frontend source selection to search filters"""
@@ -71,6 +80,62 @@ def read_root():
 def hello():
     return {"message": "Hello from FastAPI!"}
 
+
+@app.post("/api/report-structure")
+async def generate_report_structure(request: ReportRequest):
+    """Generate report structure and research plan (preview mode)"""
+    print(f"Report structure request: {request.topic}")
+    try:
+        # Generate structure and research plan only
+        report_structure = comprehensive_report_service.structure_service.generate_report_structure(
+            request.topic, request.domain_context
+        )
+        research_plan = comprehensive_report_service.research_service.generate_research_plan(
+            report_structure
+        )
+        
+        return {
+            "success": True,
+            "structure": report_structure.to_dict(),
+            "research_plan": {
+                "topic": research_plan.topic,
+                "search_strategy": research_plan.search_strategy,
+                "research_queries": [
+                    {
+                        "section_title": rq.section_title,
+                        "search_queries": rq.search_queries,
+                        "key_concepts": rq.key_concepts,
+                        "search_priority": rq.search_priority
+                    }
+                    for rq in research_plan.research_queries
+                ]
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error generating report structure: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating structure: {str(e)}")
+
+@app.post("/api/comprehensive-report")
+async def generate_comprehensive_report(request: ReportRequest):
+    """Generate a comprehensive structured report based on research plan"""
+    print(f"Comprehensive report request: {request.topic}")
+    try:
+        report_content = await comprehensive_report_service.generate_comprehensive_report(
+            topic=request.topic,
+            sources=request.sources,
+            enable_web_search=request.enable_web_search,
+            domain_context=request.domain_context
+        )
+        
+        return {
+            "success": True,
+            "report": report_content.to_dict()
+        }
+        
+    except Exception as e:
+        print(f"Error generating comprehensive report: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
 
 @app.post("/api/query")
 async def query_documents(request: QueryRequest):
@@ -184,6 +249,59 @@ async def reindex_documents():
     except Exception as e:
         print(f"Error reindexing documents: {e}")
         raise HTTPException(status_code=500, detail="Error reindexing documents")
+
+@app.get("/api/pdf/{filename:path}")
+async def serve_pdf(filename: str):
+    """Serve PDF files for citation links"""
+    try:
+        # Construct the data directory path (one level up)
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+        data_dir_abs = os.path.abspath(data_dir)
+        
+        # First try direct path (in case filename includes subdirectory)
+        pdf_path = os.path.join(data_dir, filename)
+        full_path = os.path.abspath(pdf_path)
+        
+        # Security check - ensure the file is within the data directory
+        if not full_path.startswith(data_dir_abs):
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # If direct path exists, return it
+        if os.path.exists(full_path):
+            return FileResponse(
+                full_path,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"inline; filename={os.path.basename(filename)}"}
+            )
+        
+        # If direct path doesn't exist, search recursively for the filename
+        import glob
+        search_pattern = os.path.join(data_dir, "**", os.path.basename(filename))
+        matches = glob.glob(search_pattern, recursive=True)
+        
+        if matches:
+            # Use the first match found
+            found_path = matches[0]
+            # Double-check security constraint
+            found_path_abs = os.path.abspath(found_path)
+            if not found_path_abs.startswith(data_dir_abs):
+                raise HTTPException(status_code=403, detail="Access denied")
+            
+            return FileResponse(
+                found_path,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"inline; filename={os.path.basename(filename)}"}
+            )
+        
+        # File not found anywhere
+        raise HTTPException(status_code=404, detail="PDF not found")
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        print(f"Error serving PDF: {e}")
+        raise HTTPException(status_code=500, detail="Error serving PDF")
 
 @app.post("/api/search_test")
 async def test_search_filtering(request: QueryRequest):

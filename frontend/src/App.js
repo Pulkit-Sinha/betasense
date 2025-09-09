@@ -91,15 +91,16 @@ function App() {
     setResponse(null);
 
     try {
-      const response = await fetch('http://localhost:8000/api/query', {
+      const response = await fetch('http://localhost:8000/api/comprehensive-report', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: query,
+          topic: query,
           sources: selectedSources,
-          enable_web_search: enableWebSearch
+          enable_web_search: enableWebSearch,
+          domain_context: "financial analysis"
         })
       });
 
@@ -126,8 +127,8 @@ function App() {
     <div className="App">
       <div className="container">
         <header className="app-header">
-          <h1>BetaSense Document Query</h1>
-          <p className="subtitle">Query financial documents with source selection</p>
+          <h1>BetaSense Report Generator</h1>
+          <p className="subtitle">Generate comprehensive financial reports with structured analysis</p>
         </header>
 
         <div className="main-content">

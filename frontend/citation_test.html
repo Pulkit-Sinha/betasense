@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Citation Parsing Test</title>
+</head>
+<body>
+    <h1>Citation Parsing Test</h1>
+    
+    <h2>Test Text Content</h2>
+    <p>Core Subsidiaries: Reliance Industrial Investments and Holdings Limited, Jio Credit Limited, Jio Insurance Broking Limited, Jio Payment Solutions Limited, Jio Leasing Services Limited, and Jio Finance Platform and Service Limited [Source: 20250717 - INTRM - 543940_IN - Independent Auditors Review Report - 11 pages.pdf]</p>
+    
+    <h2>Citation Regex Test</h2>
+    <div id="results"></div>
+    
+    <script>
+        // Test the citation parsing logic
+        const testText = "Core Subsidiaries: Reliance Industrial Investments and Holdings Limited, Jio Credit Limited, Jio Insurance Broking Limited, Jio Payment Solutions Limited, Jio Leasing Services Limited, and Jio Finance Platform and Service Limited [Source: 20250717 - INTRM - 543940_IN - Independent Auditors Review Report - 11 pages.pdf]";
+        
+        const citationRegex = /\[Source:[^\]]+\]/g;
+        const parts = testText.split(citationRegex);
+        const citations = testText.match(citationRegex) || [];
+        
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `
+            <h3>Parsing Results:</h3>
+            <p><strong>Text parts:</strong> ${parts.length}</p>
+            <ul>${parts.map((part, i) => `<li>Part ${i}: "${part}"</li>`).join('')}</ul>
+            
+            <p><strong>Citations found:</strong> ${citations.length}</p>
+            <ul>${citations.map((citation, i) => `<li>Citation ${i}: "${citation}"</li>`).join('')}</ul>
+            
+            <h3>Generated HTML:</h3>
+            <div style="border: 1px solid #ccc; padding: 10px; background: #f9f9f9;">
+                ${parts.map((part, index) => {
+                    let html = part;
+                    if (citations[index]) {
+                        const citationText = citations[index];
+                        const match = citationText.match(/\[Source:\s*([^\]]+)\]/);
+                        if (match) {
+                            const filename = match[1].trim();
+                            const urlPath = encodeURIComponent(filename);
+                            const pdfUrl = `http://localhost:8000/api/pdf/${urlPath}`;
+                            const displayName = filename.replace(/\.pdf$/i, '')
+                                .replace(/^\d{8}\s*-\s*/, '') 
+                                .replace(/\s*-\s*\d+\s*pages?$/i, '');
+                            html += `<a href="${pdfUrl}" target="_blank" style="display: inline-block; margin: 4px 8px 4px 0; padding: 6px 12px; background: #f8f9fa; border: 1px solid #28a745; border-radius: 4px; color: #28a745; text-decoration: none; font-size: 0.85rem;">📄 ${displayName}</a>`;
+                        }
+                    }
+                    return html;
+                }).join('')}
+            </div>
+        `;
+    </script>
+</body>
+</html>
