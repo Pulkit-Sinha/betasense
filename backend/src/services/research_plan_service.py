@@ -1,8 +1,8 @@
 from typing import Dict, List, Any
 from dataclasses import dataclass
 import re
-from services.llm_service import LLMService
-from services.report_structure_service import ReportStructure, ReportSection
+from .llm_service import LLMService
+from .report_structure_service import ReportStructure, ReportSection
 
 @dataclass
 class ResearchQuery:
@@ -104,6 +104,9 @@ class ResearchPlanService:
                 import json
                 plan_data = json.loads(response)
             
+            print(f"Research plan data: {plan_data}")
+            print(f"Research queries count: {len(plan_data.get('research_queries', []))}")
+            
             research_queries = []
             for query_data in plan_data.get("research_queries", []):
                 research_query = ResearchQuery(
@@ -120,8 +123,9 @@ class ResearchPlanService:
                 search_strategy=plan_data.get("search_strategy", "Comprehensive multi-angle research approach")
             )
             
-        except (json.JSONDecodeError, KeyError) as e:
+        except (json.JSONDecodeError, KeyError, Exception) as e:
             print(f"Error parsing research plan: {e}")
+            print(f"Raw LLM response: {response}")
             # Fallback: Generate basic queries from report structure
             return self._generate_fallback_plan(report_structure)
     
@@ -129,33 +133,24 @@ class ResearchPlanService:
         """Generate a basic research plan if LLM parsing fails"""
         research_queries = []
         
-        # Extract the main topic from report title
-        topic_words = report_structure.title.lower().replace("analysis report:", "").strip()
+        # Extract the main topic and clean it
+        clean_title = report_structure.title.replace(":", "").replace("-", " ")
         
-        for section in report_structure.sections:
-            # Generate cleaner, more specific queries
-            queries = []
-            
-            if "key takeaways" in section.title.lower():
-                queries = [
-                    f"{topic_words} analysis summary",
-                    f"{topic_words} key findings",
-                    f"{topic_words} conclusion"
-                ]
-            elif "executive summary" in section.title.lower():
-                queries = [
-                    f"{topic_words} overview",
-                    f"{topic_words} assessment",
-                    f"{topic_words} recommendation"
-                ]
+        # Generate specific queries for JioFin/financial analysis
+        base_queries = [
+            "JioFin business model revenue streams",
+            "Jio Financial Services financial performance",
+            "JioFin stock analysis investment",
+            "Reliance Jio Financial Services management",
+            "JioFin competitive advantages market position"
+        ]
+        
+        for i, section in enumerate(report_structure.sections):
+            # Generate section-specific queries
+            if i < len(base_queries):
+                queries = [base_queries[i]]
             else:
-                # For detailed analysis section
-                queries = [
-                    f"{topic_words} financial performance",
-                    f"{topic_words} valuation metrics",
-                    f"{topic_words} market analysis",
-                    f"{topic_words} price trends"
-                ]
+                queries = [f"JioFin {section.title.lower().replace('analysis', '').replace('assessment', '').strip()}"]
             
             # Clean up queries to remove problematic characters for Solr
             clean_queries = []
@@ -174,7 +169,7 @@ class ResearchPlanService:
             research_queries.append(research_query)
         
         return ResearchPlan(
-            topic=topic_words,
+            topic=clean_title,
             research_queries=research_queries,
             search_strategy="Focused keyword-based search with topic extraction"
         )

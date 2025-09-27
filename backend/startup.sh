@@ -154,7 +154,7 @@ if [ "$NEED_INDEXING" = false ]; then
 import sys, os
 sys.path.append('.')
 try:
-    from services.vector_service import VectorService
+    from src.services.vector_service import VectorService
     vs = VectorService()
     print(vs.get_document_count())
 except:
@@ -173,7 +173,7 @@ fi
 # Index documents if needed
 if [ "$NEED_INDEXING" = true ]; then
     print_info "Starting document indexing..."
-    python -m services.indexing_service
+    python -m src.services.indexing_service
     
     if [ $? -eq 0 ]; then
         # Update timestamp
@@ -192,7 +192,7 @@ print_info "Getting system status..."
 python3 -c "
 import sys
 sys.path.append('.')
-from services.indexing_service import IndexingService
+from src.services.indexing_service import IndexingService
 indexing_service = IndexingService()
 stats = indexing_service.get_index_stats()
 print(f'📊 System Statistics:')
@@ -213,4 +213,4 @@ print_info "Press Ctrl+C to stop the server"
 echo ""
 
 # Start the server
-uvicorn main:app --reload --port 8000
+uvicorn src.main:app --reload --port 8000

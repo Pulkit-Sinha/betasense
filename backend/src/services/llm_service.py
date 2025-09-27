@@ -5,8 +5,7 @@ import sys
 from typing import Optional
 from langchain_aws import ChatBedrock
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import LLMModel
+from ..constants import LLMModel
 
 
 class LLMService:

@@ -2,36 +2,82 @@
   box-sizing: border-box;
 }
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Courier New', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f8f9fa;
+  background: #000612;
+  background-image: 
+    linear-gradient(45deg, rgba(0, 255, 255, 0.02) 0%, transparent 50%),
+    linear-gradient(-45deg, rgba(255, 0, 255, 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 25% 75%, rgba(0, 255, 255, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 75% 25%, rgba(255, 0, 255, 0.05) 0%, transparent 40%);
+  color: #00ffff;
+  overflow-x: hidden;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Courier New', monospace;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Cyberpunk Style */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 14px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: #0a0a0a;
+  border-radius: 8px;
+  border: 1px solid #333;
+  box-shadow: inset 0 0 10px rgba(0, 255, 255, 0.1);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 4px;
+  background: linear-gradient(135deg, #00ffff 0%, #ff00ff 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: linear-gradient(135deg, #00ffff 0%, #ffff00 100%);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+  border-color: rgba(255, 255, 0, 0.5);
+}
+
+/* Selection styling */
+::selection {
+  background: rgba(0, 255, 255, 0.3);
+  color: #000;
+  text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+}
+
+/* Cyberpunk text effects */
+.cyberpunk-text {
+  text-shadow: 
+    0 0 5px currentColor,
+    0 0 10px currentColor,
+    0 0 15px currentColor;
+}
+
+.neon-glow {
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+  0% {
+    text-shadow: 
+      0 0 5px currentColor,
+      0 0 10px currentColor,
+      0 0 15px currentColor;
+  }
+  100% {
+    text-shadow: 
+      0 0 8px currentColor,
+      0 0 16px currentColor,
+      0 0 24px currentColor;
+  }
 }

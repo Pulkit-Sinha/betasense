@@ -1,8 +1,82 @@
-/* App.css */
+/* App.css - Cyberpunk Theme */
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background: #000612;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(255, 0, 255, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 40% 80%, rgba(255, 255, 0, 0.05) 0%, transparent 40%),
+    linear-gradient(0deg, rgba(0, 255, 255, 0.01) 0%, rgba(255, 0, 255, 0.01) 50%, rgba(255, 255, 0, 0.01) 100%);
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', Consolas, 'Courier New', monospace;
+  color: #00ffff;
+  position: relative;
+}
+
+.App::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 255, 0.03) 2px,
+      rgba(0, 255, 255, 0.03) 4px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 0, 255, 0.02) 2px,
+      rgba(255, 0, 255, 0.02) 4px
+    );
+  pointer-events: none;
+  z-index: -1;
+  animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.App::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 0, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: neonShift 6s ease-in-out infinite alternate;
+}
+
+@keyframes neonShift {
+  0% {
+    transform: translate(-2px, -2px);
+    filter: blur(0px);
+  }
+  50% {
+    transform: translate(2px, 2px);
+    filter: blur(1px);
+  }
+  100% {
+    transform: translate(-1px, 1px);
+    filter: blur(0px);
+  }
 }
 
 .container {
@@ -14,21 +88,49 @@
 .app-header {
   text-align: center;
   margin-bottom: 30px;
-  color: white;
+  color: #ffffff;
 }
 
 .app-header h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: 2.8rem;
+  font-weight: 900;
   margin: 0 0 10px 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  background: linear-gradient(135deg, #00ffff 0%, #ff00ff 50%, #ffff00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.5),
+    0 0 40px rgba(255, 0, 255, 0.3),
+    0 0 60px rgba(255, 255, 0, 0.2);
+  letter-spacing: -2px;
+  text-transform: uppercase;
+  animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes titleGlow {
+  0% {
+    text-shadow: 
+      0 0 20px rgba(0, 255, 255, 0.5),
+      0 0 40px rgba(255, 0, 255, 0.3),
+      0 0 60px rgba(255, 255, 0, 0.2);
+  }
+  100% {
+    text-shadow: 
+      0 0 30px rgba(0, 255, 255, 0.8),
+      0 0 50px rgba(255, 0, 255, 0.5),
+      0 0 70px rgba(255, 255, 0, 0.3);
+  }
 }
 
 .subtitle {
   font-size: 1.1rem;
-  opacity: 0.9;
+  color: #66ffff;
   margin: 0;
-  font-weight: 300;
+  font-weight: 400;
+  font-family: 'Roboto Mono', monospace;
+  text-shadow: 0 0 10px rgba(102, 255, 255, 0.5);
+  letter-spacing: 1px;
 }
 
 .main-content {
@@ -39,13 +141,18 @@
 }
 
 .left-panel {
-  background: white;
+  background: rgba(0, 6, 18, 0.9);
+  border: 2px solid rgba(0, 255, 255, 0.3);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  box-shadow: 
+    0 0 30px rgba(0, 255, 255, 0.2),
+    0 8px 32px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(0, 255, 255, 0.1);
   overflow: hidden;
   height: fit-content;
   position: sticky;
   top: 20px;
+  backdrop-filter: blur(10px);
 }
 
 .right-panel {
@@ -55,12 +162,16 @@
 }
 
 .error-message {
-  background: #fee;
-  border: 1px solid #fcc;
-  border-radius: 8px;
+  background: rgba(18, 0, 6, 0.9);
+  border: 2px solid #ff0066;
+  border-radius: 12px;
   padding: 15px;
-  color: #c33;
+  color: #ff3399;
   text-align: center;
+  box-shadow: 
+    0 0 30px rgba(255, 0, 102, 0.4),
+    inset 0 0 20px rgba(255, 0, 102, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .error-message p {

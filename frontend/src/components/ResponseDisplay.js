@@ -7,9 +7,9 @@ const ResponseDisplay = ({ response, loading }) => {
   // Function to parse and create citation links
   const createCitationLink = (citationText) => {
     // Extract filename from citation like "[Source: filename.pdf]"
-    const match = citationText.match(/\[Source:\s*([^\]]+)\]/);
-    if (match) {
-      const filename = match[1].trim();
+    const sourceMatch = citationText.match(/\[Source:\s*([^\]]+)\]/);
+    if (sourceMatch) {
+      const filename = sourceMatch[1].trim();
       // Convert filename to URL path (handle spaces and special characters)  
       const urlPath = encodeURIComponent(filename);
       const pdfUrl = `http://localhost:8000/api/pdf/${urlPath}`;
@@ -24,25 +24,58 @@ const ResponseDisplay = ({ response, loading }) => {
           href={pdfUrl} 
           target="_blank" 
           rel="noopener noreferrer" 
-          className="citation-link"
+          className="citation-link document-citation"
           title={`Open ${filename} in new tab`}
           onClick={(e) => {
             // Optional: Add analytics tracking
-            console.log('Citation clicked:', filename);
+            console.log('Document citation clicked:', filename);
           }}
         >
           📄 {displayName}
         </a>
       );
     }
+
+    // Extract URL from web citation like "[Web: https://example.com]"
+    const webMatch = citationText.match(/\[Web:\s*([^\]]+)\]/);
+    if (webMatch) {
+      const url = webMatch[1].trim();
+      
+      // Extract domain name for display
+      let displayName;
+      try {
+        const domain = new URL(url).hostname;
+        displayName = domain.replace(/^www\./, '');
+      } catch (e) {
+        displayName = url.length > 30 ? url.substring(0, 30) + '...' : url;
+      }
+      
+      return (
+        <a 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="citation-link web-citation"
+          title={`Open ${url} in new tab`}
+          onClick={(e) => {
+            // Optional: Add analytics tracking
+            console.log('Web citation clicked:', url);
+          }}
+        >
+          🌐 {displayName}
+        </a>
+      );
+    }
+
     return citationText;
   };
 
   // Function to create citation link markup that ReactMarkdown can render
   const createCitationMarkup = (citationText) => {
-    const match = citationText.match(/\[Source:\s*([^\]]+)\]/);
-    if (match) {
-      const filename = match[1].trim();
+    // Handle document citations [Source: filename.pdf]
+    const sourceMatch = citationText.match(/\[Source:\s*([^\]]+)\]/);
+    if (sourceMatch) {
+      const filename = sourceMatch[1].trim();
       const urlPath = encodeURIComponent(filename);
       const pdfUrl = `http://localhost:8000/api/pdf/${urlPath}`;
       
@@ -52,8 +85,27 @@ const ResponseDisplay = ({ response, loading }) => {
         .replace(/\s*-\s*\d+\s*pages?$/i, ''); // Remove page count suffix
       
       // Return HTML markup that ReactMarkdown can process
-      return `<a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" class="citation-link" title="Open ${filename} in new tab">📄 ${displayName}</a>`;
+      return `<a href="${pdfUrl}" target="_blank" rel="noopener noreferrer" class="citation-link document-citation" title="Open ${filename} in new tab">📄 ${displayName}</a>`;
     }
+
+    // Handle web citations [Web: https://example.com]
+    const webMatch = citationText.match(/\[Web:\s*([^\]]+)\]/);
+    if (webMatch) {
+      const url = webMatch[1].trim();
+      
+      // Extract domain name for display
+      let displayName;
+      try {
+        const domain = new URL(url).hostname;
+        displayName = domain.replace(/^www\./, '');
+      } catch (e) {
+        displayName = url.length > 30 ? url.substring(0, 30) + '...' : url;
+      }
+      
+      // Return HTML markup that ReactMarkdown can process
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="citation-link web-citation" title="Open ${url} in new tab">🌐 ${displayName}</a>`;
+    }
+
     return citationText;
   };
 
@@ -61,11 +113,21 @@ const ResponseDisplay = ({ response, loading }) => {
   const preprocessContentForCitations = (content) => {
     if (typeof content !== 'string') return content;
     
-    // Replace all citations with HTML link markup
-    const citationRegex = /\[Source:[^\]]+\]/g;
-    return content.replace(citationRegex, (match) => {
+    // Replace all citations with HTML link markup (both document and web citations)
+    const documentCitationRegex = /\[Source:[^\]]+\]/g;
+    const webCitationRegex = /\[Web:[^\]]+\]/g;
+    
+    // First replace document citations
+    let processedContent = content.replace(documentCitationRegex, (match) => {
       return createCitationMarkup(match);
     });
+    
+    // Then replace web citations
+    processedContent = processedContent.replace(webCitationRegex, (match) => {
+      return createCitationMarkup(match);
+    });
+    
+    return processedContent;
   };
 
   // Custom markdown components (citations now handled at preprocessing level)
@@ -183,11 +245,39 @@ const ResponseDisplay = ({ response, loading }) => {
                 {response.report.sources_used.slice(0, 10).map((source, index) => (
                   <div key={index} className="source-item">
                     <div className="source-header">
-                      <span className="source-title">{source.file || `Source ${index + 1}`}</span>
-                      <span className="source-type">{source.search_type || 'Document'}</span>
+                      {source.source_file || source.file ? (
+                        <span 
+                          className="source-title clickable-source"
+                          title={`Document: ${source.source_file || source.file}`}
+                          onClick={(e) => {
+                            const filename = source.source_file || source.file;
+                            console.log('Source clicked:', filename);
+                            // Copy filename to clipboard and show notification
+                            navigator.clipboard.writeText(filename).then(() => {
+                              // You could add a toast notification here
+                              alert(`Document filename copied to clipboard: ${filename}`);
+                            }).catch(() => {
+                              // Fallback if clipboard API fails
+                              alert(`Document: ${filename}`);
+                            });
+                          }}
+                        >
+                          📄 {source.source_file || source.file}
+                        </span>
+                      ) : (
+                        <span className="source-title">{`Source ${index + 1}`}</span>
+                      )}
+                      <span className="source-type">{source.search_type || 'document'}</span>
                     </div>
-                    <div className="source-score">
-                      Score: {source.score?.toFixed(3) || 'N/A'}
+                    <div className="source-details">
+                      <div className="source-score">
+                        Relevance: {source.combined_score?.toFixed(3) || source.score?.toFixed(3) || 'N/A'}
+                      </div>
+                      {source.text && typeof source.text === 'string' && (
+                        <div className="source-preview">
+                          {source.text.substring(0, 100)}...
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -205,17 +295,38 @@ const ResponseDisplay = ({ response, loading }) => {
             <div className="web-sources-section">
               <h3>🌐 Web Sources</h3>
               <div className="sources-list">
-                {response.report.web_results.slice(0, 5).map((source, index) => (
-                  <div key={index} className="source-item">
+                {response.report.web_results.slice(0, 8).map((source, index) => (
+                  <div key={index} className="source-item web-source-item">
                     <div className="source-header">
-                      <span className="source-title">{source.title || 'Web Source'}</span>
-                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="source-link">
-                        🔗
+                      <a 
+                        href={source.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="source-title clickable-source web-source-title"
+                        title={`Open ${source.url} in new tab`}
+                      >
+                        🌐 {source.title || 'Web Source'}
                       </a>
+                      <a href={source.url} target="_blank" rel="noopener noreferrer" className="source-link">
+                        🔗 Visit
+                      </a>
+                    </div>
+                    {source.snippet && (
+                      <div className="source-snippet">
+                        {source.snippet}
+                      </div>
+                    )}
+                    <div className="source-url">
+                      {new URL(source.url).hostname}
                     </div>
                   </div>
                 ))}
               </div>
+              {response.report.web_results.length > 8 && (
+                <p className="sources-more">
+                  ... and {response.report.web_results.length - 8} more web sources
+                </p>
+              )}
             </div>
           )}
         </div>

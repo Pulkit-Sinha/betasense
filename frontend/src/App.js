@@ -17,7 +17,7 @@ function App() {
         krc_research: true,
         smc_global: true,
         institutional_investor: true,
-        financial_research: false
+        financial_research: true
       }
     },
     companyDocs: {
@@ -35,7 +35,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pastQuestions, setPastQuestions] = useState([]);
-  const [enableWebSearch, setEnableWebSearch] = useState(false);
+  const [enableWebSearch, setEnableWebSearch] = useState(true);
 
   const handleSourceChange = (category, subcategory, enabled) => {
     setSelectedSources(prev => ({
@@ -127,7 +127,7 @@ function App() {
     <div className="App">
       <div className="container">
         <header className="app-header">
-          <h1>BetaSense Report Generator</h1>
+          <h1>BetaSense</h1>
           <p className="subtitle">Generate comprehensive financial reports with structured analysis</p>
         </header>
 

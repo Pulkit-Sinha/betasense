@@ -1,12 +1,13 @@
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 import json
+import asyncio
 
-from services.llm_service import LLMService
-from services.hybrid_search_service import HybridSearchService
-from services.websearch_service import WebSearchService
-from services.report_structure_service import ReportStructureService, ReportStructure
-from services.research_plan_service import ResearchPlanService, ResearchPlan
+from .llm_service import LLMService
+from .hybrid_search_service import HybridSearchService
+from .websearch_service import WebSearchService
+from .report_structure_service import ReportStructureService, ReportStructure
+from .research_plan_service import ResearchPlanService, ResearchPlan
 
 @dataclass
 class ReportContent:
@@ -59,6 +60,7 @@ class ComprehensiveReportService:
         # Step 2: Create research plan based on structure
         print("Creating detailed research plan...")
         research_plan = self.research_service.generate_research_plan(report_structure)
+        print(f"Research plan created with {len(research_plan.research_queries)} queries")
         
         # Step 3: Execute searches based on research plan
         print("Executing searches based on research plan...")
@@ -98,10 +100,17 @@ class ComprehensiveReportService:
         keyword_queries = research_plan.get_high_priority_queries()[:5]  # Top 5 high-priority
         vector_queries = research_plan.get_all_search_queries()[:8]      # Top 8 overall
         
+        print(f"Research plan has {len(research_plan.research_queries)} research queries")
+        print(f"High priority queries: {keyword_queries}")
+        print(f"All queries: {vector_queries}")
         print(f"Executing {len(keyword_queries)} keyword searches and {len(vector_queries)} vector searches")
         
         # Execute local document searches
-        for query in set(keyword_queries + vector_queries):  # Deduplicate
+        unique_queries = set(keyword_queries + vector_queries)
+        print(f"Unique queries to search: {len(unique_queries)}")
+        
+        for i, query in enumerate(unique_queries):
+            print(f"Searching {i+1}/{len(unique_queries)}: {query}")
             try:
                 local_results = self.hybrid_search_service.search_documents_expanded(
                     query=query,
@@ -110,18 +119,58 @@ class ComprehensiveReportService:
                     keyword_count=5,  # Fewer per query but more queries
                     vector_count=5
                 )
+                print(f"Found {len(local_results) if local_results else 0} results for query: {query[:50]}...")
                 if local_results:
                     all_local_results.extend(local_results)
             except Exception as e:
                 print(f"Error searching for query '{query}': {e}")
                 continue
         
+        print(f"Total local results collected: {len(all_local_results)}")
+        
+        # If no local results found, add fallback search with broader terms
+        if not all_local_results:
+            print("No local results found, trying fallback searches...")
+            # Clean the topic for search - remove special characters and truncate
+            clean_topic = research_plan.topic.replace(":", "").replace("-", " ").replace(",", "")
+            topic_words = clean_topic.split()[:4]  # Take first 4 words
+            
+            fallback_queries = [
+                " ".join(topic_words),
+                "JioFin financial analysis",
+                "financial services analysis"
+            ]
+            for query in fallback_queries:
+                try:
+                    fallback_results = self.hybrid_search_service.search_documents_expanded(
+                        query=query,
+                        categories=None,
+                        subcategories=None,
+                        keyword_count=10,
+                        vector_count=10
+                    )
+                    if fallback_results:
+                        print(f"Fallback search found {len(fallback_results)} results for: {query}")
+                        all_local_results.extend(fallback_results)
+                        break
+                except Exception as e:
+                    print(f"Fallback search error for '{query}': {e}")
+                    continue
+        
         # Execute web searches if enabled
+        print(f"Web search enabled: {enable_web_search}")
         if enable_web_search:
             web_queries = research_plan.get_high_priority_queries()[:3]  # Top 3 for web
+            print(f"Starting web search with {len(web_queries)} queries: {web_queries}")
             for query in web_queries:
+                print(f"Web searching for: {query}")
                 try:
-                    web_results = await self.websearch_service.search_and_scrape_web(query)
+                    # Add timeout for web search to prevent hanging
+                    web_results = await asyncio.wait_for(
+                        self.websearch_service.search_and_scrape_web(query),
+                        timeout=30.0  # 30 second timeout per query
+                    )
+                    print(f"Web search returned {len(web_results) if web_results else 0} results for query: {query[:50]}...")
                     if web_results:
                         all_web_results.extend(web_results)
                 except Exception as e:
@@ -131,6 +180,8 @@ class ComprehensiveReportService:
         # Deduplicate and rank results
         deduplicated_local = self._deduplicate_results(all_local_results)
         deduplicated_web = self._deduplicate_web_results(all_web_results)
+        
+        print(f"Final search results - Local: {len(deduplicated_local)}, Web: {len(deduplicated_web)}")
         
         return {
             "local_sources": deduplicated_local[:20],  # Top 20 local results
@@ -153,22 +204,26 @@ class ComprehensiveReportService:
         local_context = self._create_context_from_sources(local_sources)
         web_context = self._create_context_from_web_sources(web_sources)
         
-        for section in structure.sections:
-            print(f"Generating content for section: {section.title}")
+        for i, section in enumerate(structure.sections):
+            print(f"Generating content for section {i+1}/{len(structure.sections)}: {section.title}")
             
             # Find relevant research queries for this section
             relevant_queries = [
                 rq for rq in research_plan.research_queries 
                 if rq.section_title == section.title
             ]
+            print(f"Found {len(relevant_queries)} relevant queries for this section")
             
             section_context = self._filter_context_for_section(
                 local_context, web_context, section, relevant_queries
             )
+            print(f"Context length for section: {len(section_context)} characters")
             
+            print(f"Calling LLM for section: {section.title}")
             content = await self._generate_single_section_content(
                 section, section_context, structure.title
             )
+            print(f"LLM returned {len(content)} characters for section: {section.title}")
             
             section_contents[section.title] = content
         
@@ -189,7 +244,7 @@ class ComprehensiveReportService:
         - Write in a professional, analytical tone
         - Include specific data, figures, and citations where available
         - Be concise and focused - aim for approximately {section.estimated_pages} pages of content (about 200-400 words per section)
-        - Always cite sources with [Source: filename] format
+        - Always cite sources with [Source: filename] format for documents and [Web: URL] format for web sources
         - Focus specifically on: {', '.join(section.key_topics)}
         - Provide actionable insights rather than lengthy explanations
         

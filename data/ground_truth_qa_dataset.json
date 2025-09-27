@@ -1,0 +1,161 @@
+{
+  "metadata": {
+    "created_at": "2025-01-27",
+    "description": "Ground truth QA dataset for Jio Financial Services testing",
+    "total_questions": 15,
+    "documents_covered": 3,
+    "categories": ["company_docs", "broker_research"]
+  },
+  "qa_pairs": [
+    {
+      "id": 1,
+      "question": "What was Jio Financial Services' Net Income from Business in Q1 FY26?",
+      "answer": "Rs. 219 Cr",
+      "source_file": "20250717 - IR - 543940_IN - Q1 FY26 Earnings Presentation - 20 pages.pdf",
+      "category": "company_docs",
+      "subcategory": "presentations",
+      "question_type": "numerical",
+      "difficulty": "easy"
+    },
+    {
+      "id": 2,
+      "question": "How much did Net Income from Business grow year-over-year in Q1 FY26?",
+      "answer": "4x YoY (4 times year-over-year)",
+      "source_file": "20250717 - IR - 543940_IN - Q1 FY26 Earnings Presentation - 20 pages.pdf",
+      "category": "company_docs",
+      "subcategory": "presentations",
+      "question_type": "numerical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 3,
+      "question": "What was the Consolidated Net worth of Jio Financial Services in Q1 FY26?",
+      "answer": "Rs. 1,40,072 Cr",
+      "source_file": "20250717 - IR - 543940_IN - Q1 FY26 Earnings Presentation - 20 pages.pdf",
+      "category": "company_docs",
+      "subcategory": "presentations",
+      "question_type": "numerical",
+      "difficulty": "easy"
+    },
+    {
+      "id": 4,
+      "question": "What was the NBFC AUM (Assets Under Management) in Q1 FY26 and how does it compare to Q1 FY25?",
+      "answer": "Rs. 11,665 Cr vs Rs 217 Cr in Q1 FY25",
+      "source_file": "20250717 - IR - 543940_IN - Q1 FY26 Earnings Presentation - 20 pages.pdf",
+      "category": "company_docs",
+      "subcategory": "presentations",
+      "question_type": "comparative",
+      "difficulty": "medium"
+    },
+    {
+      "id": 5,
+      "question": "What was the percentage growth in Payment solutions TPV (Total Payment Value) year-over-year?",
+      "answer": "+93% YoY",
+      "source_file": "20250717 - IR - 543940_IN - Q1 FY26 Earnings Presentation - 20 pages.pdf",
+      "category": "company_docs",
+      "subcategory": "presentations",
+      "question_type": "numerical",
+      "difficulty": "easy"
+    },
+    {
+      "id": 6,
+      "question": "According to Jefferies Research, what was Jio FS's consolidated profit in 1Q?",
+      "answer": "Rs3bn, which was up 4% YoY and 3% QoQ",
+      "source_file": "20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "jefferies_research",
+      "question_type": "numerical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 7,
+      "question": "What was the Monthly Active Users (MAUs) for JioFinance app according to Jefferies?",
+      "answer": "8mn (8 million), with a ~1% QoQ rise",
+      "source_file": "20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "jefferies_research",
+      "question_type": "numerical",
+      "difficulty": "easy"
+    },
+    {
+      "id": 8,
+      "question": "According to Jefferies, what was the lending AUM growth and total amount?",
+      "answer": "Lending AUM rose by 16% QoQ to Rs117bn",
+      "source_file": "20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "jefferies_research",
+      "question_type": "numerical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 9,
+      "question": "What is the status of Jio's joint venture with BlackRock according to Jefferies?",
+      "answer": "The JV with BlackRock raised its maiden fund (debt/liquid) and has approvals to launch 5 index funds",
+      "source_file": "20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "jefferies_research",
+      "question_type": "factual",
+      "difficulty": "medium"
+    },
+    {
+      "id": 10,
+      "question": "In how many cities is Jio FS's lending business present according to Jefferies?",
+      "answer": "11 cities",
+      "source_file": "20250717 - Jefferies Research - 543940_IN - Revision - Jio Financial Services 1Q - 9 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "jefferies_research",
+      "question_type": "numerical",
+      "difficulty": "easy"
+    },
+    {
+      "id": 11,
+      "question": "According to UBS Research, what action did Jio take regarding its Rs249 plan?",
+      "answer": "Jio has removed its Rs249 plan (1GB/day, 28 days)",
+      "source_file": "20250819 - UBS Research - 543940_IN - UBS Fast Take India - 11 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "ubs_research",
+      "question_type": "factual",
+      "difficulty": "easy"
+    },
+    {
+      "id": 12,
+      "question": "What percentage of prepaid subscribers are on 1GB/day plan according to UBS Evidence Lab survey?",
+      "answer": "10-15% of prepaid subs are on 1GB/day plan",
+      "source_file": "20250819 - UBS Research - 543940_IN - UBS Fast Take India - 11 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "ubs_research",
+      "question_type": "numerical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 13,
+      "question": "According to UBS, what is the price difference customers will face when moving from 1GB/day to 1.5GB/day plan?",
+      "answer": "Rs50 more expensive (1.5GB/day plan is Rs50 more expensive than the removed Rs249 1GB/day plan)",
+      "source_file": "20250819 - UBS Research - 543940_IN - UBS Fast Take India - 11 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "ubs_research",
+      "question_type": "numerical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 14,
+      "question": "What impact on ARPUs does UBS expect from Jio's plan removal?",
+      "answer": "This could add 2-3% to ARPUs (Average Revenue Per User)",
+      "source_file": "20250819 - UBS Research - 543940_IN - UBS Fast Take India - 11 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "ubs_research",
+      "question_type": "analytical",
+      "difficulty": "medium"
+    },
+    {
+      "id": 15,
+      "question": "What is UBS's expectation regarding other telecom operators following Jio's plan removal?",
+      "answer": "Expect Airtel, VIL to follow suit / Expect others to follow suit",
+      "source_file": "20250819 - UBS Research - 543940_IN - UBS Fast Take India - 11 pages.pdf",
+      "category": "broker_research",
+      "subcategory": "ubs_research",
+      "question_type": "analytical",
+      "difficulty": "easy"
+    }
+  ]
+}

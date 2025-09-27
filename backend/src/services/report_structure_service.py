@@ -1,6 +1,6 @@
 from typing import Dict, List, Any
 from dataclasses import dataclass
-from services.llm_service import LLMService
+from .llm_service import LLMService
 
 @dataclass
 class ReportSection:
